@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/slike">
+        <file>chicken128.png</file>
+        <file>duck128.png</file>
+        <file>goose128.png</file>
+        <file>egg128.png</file>
+    </qresource>
+</RCC>

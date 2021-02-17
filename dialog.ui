@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>741</width>
-    <height>615</height>
+    <height>622</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>10</y>
+     <y>0</y>
      <width>191</width>
      <height>31</height>
     </rect>
@@ -70,7 +70,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>50</y>
+     <y>170</y>
      <width>681</width>
      <height>41</height>
     </rect>
@@ -92,7 +92,7 @@
     <item>
      <widget class="QLabel" name="label_2">
       <property name="text">
-       <string>PROFILE</string>
+       <string>PROFILE:</string>
       </property>
      </widget>
     </item>
@@ -115,9 +115,9 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>100</y>
+     <y>29</y>
      <width>681</width>
-     <height>111</height>
+     <height>151</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -137,7 +137,13 @@
     <item>
      <widget class="QLabel" name="label_3">
       <property name="text">
-       <string>IMG</string>
+       <string/>
+      </property>
+      <property name="textFormat">
+       <enum>Qt::PlainText</enum>
+      </property>
+      <property name="pixmap">
+       <pixmap resource="slike.qrc">:/slike/egg128.png</pixmap>
       </property>
      </widget>
     </item>
@@ -153,81 +159,6 @@
        </size>
       </property>
      </spacer>
-    </item>
-   </layout>
-  </widget>
-  <widget class="QWidget" name="gridLayoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>30</x>
-     <y>270</y>
-     <width>681</width>
-     <height>131</height>
-    </rect>
-   </property>
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="1">
-     <widget class="QSlider" name="horizontalSlider_2">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="label_6">
-      <property name="text">
-       <string>HUMI [%]</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0">
-     <widget class="QLabel" name="label_5">
-      <property name="text">
-       <string>DAYS [D]</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="0">
-     <widget class="QLabel" name="label_4">
-      <property name="text">
-       <string>TEMP [C]</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
-     <widget class="QSlider" name="horizontalSlider_3">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QSlider" name="horizontalSlider">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
-     <widget class="QLabel" name="label_7">
-      <property name="text">
-       <string>D_Value</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="2">
-     <widget class="QLabel" name="label_8">
-      <property name="text">
-       <string>T_Value</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="2">
-     <widget class="QLabel" name="label_9">
-      <property name="text">
-       <string>H_Value</string>
-      </property>
-     </widget>
     </item>
    </layout>
   </widget>
@@ -297,7 +228,7 @@
     <rect>
      <x>30</x>
      <y>520</y>
-     <width>351</width>
+     <width>321</width>
      <height>91</height>
     </rect>
    </property>
@@ -321,9 +252,9 @@
   <widget class="QWidget" name="horizontalLayoutWidget_5">
    <property name="geometry">
     <rect>
-     <x>390</x>
+     <x>380</x>
      <y>520</y>
-     <width>321</width>
+     <width>331</width>
      <height>91</height>
     </rect>
    </property>
@@ -344,8 +275,118 @@
     </item>
    </layout>
   </widget>
+  <widget class="QWidget" name="verticalLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>640</x>
+     <y>270</y>
+     <width>71</width>
+     <height>131</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QLabel" name="label_7">
+      <property name="text">
+       <string>D_Value</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_8">
+      <property name="text">
+       <string>T_Value</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_9">
+      <property name="text">
+       <string>H_Value</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_2">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>270</y>
+     <width>71</width>
+     <height>131</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <item>
+     <widget class="QLabel" name="label_5">
+      <property name="text">
+       <string>DAYS [D]</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>TEMP [C]</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="label_6">
+      <property name="text">
+       <string>HUMI [%]</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="verticalLayoutWidget_3">
+   <property name="geometry">
+    <rect>
+     <x>110</x>
+     <y>270</y>
+     <width>521</width>
+     <height>131</height>
+    </rect>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item>
+     <widget class="QSlider" name="horizontalSlider">
+      <property name="singleStep">
+       <number>1</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSlider" name="horizontalSlider_2">
+      <property name="maximum">
+       <number>1000</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QSlider" name="horizontalSlider_3">
+      <property name="maximum">
+       <number>1000</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="slike.qrc"/>
+ </resources>
  <connections/>
 </ui>
