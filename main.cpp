@@ -5,6 +5,9 @@
 
 int main(int argc, char *argv[])
 {
+    wiringPiSetup();
+    pinMode(28, OUTPUT);
+
     QApplication a(argc, argv);
     Dialog w;
     w.show();
