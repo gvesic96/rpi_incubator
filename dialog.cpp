@@ -27,8 +27,8 @@ int t_target = 0;
 int h_target = 0;
 //int mode = 0;
 
-int sense_temp();
-
+long sense_temp(void);
+double dht_read(void);
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -63,6 +63,10 @@ void Dialog::on_checkBox_clicked(bool checked)
         ui->label_8->setText("38.0 C");
         ui->horizontalSlider_3->setValue(850);
         ui->label_9->setText("85.0 %");
+
+        ui->horizontalSlider->setDisabled(true);
+        ui->horizontalSlider_2->setDisabled(true);
+        ui->horizontalSlider_3->setDisabled(true);
     }
 }
 
@@ -81,6 +85,10 @@ void Dialog::on_checkBox_2_clicked(bool checked)
         ui->label_8->setText("38.5 C");
         ui->horizontalSlider_3->setValue(850);
         ui->label_9->setText("85.0 %");
+
+        ui->horizontalSlider->setDisabled(true);
+        ui->horizontalSlider_2->setDisabled(true);
+        ui->horizontalSlider_3->setDisabled(true);
     }
 }
 
@@ -99,6 +107,10 @@ void Dialog::on_checkBox_3_clicked(bool checked)
         ui->label_8->setText("37.5 C");
         ui->horizontalSlider_3->setValue(850);
         ui->label_9->setText("85.0 %");
+
+        ui->horizontalSlider->setDisabled(true);
+        ui->horizontalSlider_2->setDisabled(true);
+        ui->horizontalSlider_3->setDisabled(true);
     }
 }
 
@@ -111,6 +123,9 @@ void Dialog::on_checkBox_4_clicked(bool checked)
 
         ui->label_3->setPixmap(QPixmap(":/slike/egg128.png"));
 
+        ui->horizontalSlider->setDisabled(false);
+        ui->horizontalSlider_2->setDisabled(false);
+        ui->horizontalSlider_3->setDisabled(false);
     }
 
 }
@@ -163,75 +178,61 @@ void Dialog::on_pushButton_2_clicked()
     t_target = ui->horizontalSlider_2->value();
     h_target = ui->horizontalSlider_3->value();
 
+    ui->horizontalSlider->setDisabled(true);
+    ui->horizontalSlider_2->setDisabled(true);
+    ui->horizontalSlider_3->setDisabled(true);
 
 
-    /*if(ui->checkBox->isChecked())  {mode = 1;}
-    if(ui->checkBox_2->isChecked()){mode = 2;}
-    if(ui->checkBox_3->isChecked()){mode = 3;}
-    if(ui->checkBox_4->isChecked()){mode = 4;}
-
-    switch(mode){
-        case 1 :
-            //days = ui->horizontalSlider->value();
-            //temp = ui->horizontalSlider_2->value();
-            //humi = ui->horizontalSlider_3->value();
-            break;
-        case 2 :
-            //days = ui->horizontalSlider->value();
-            //temp = ui->horizontalSlider_2->value();
-            //humi = ui->horizontalSlider_3->value();
-            break;
-        case 3 :
-            //days = ui->horizontalSlider->value();
-            //temp = ui->horizontalSlider_2->value();
-            //humi = ui->horizontalSlider_3->value();
-            break;
-        case 4 :
-            //days = ui->horizontalSlider->value();
-            //temp = ui->horizontalSlider_2->value();
-            //humi = ui->horizontalSlider_3->value();
-            break;
-    }*/
 }
 
 void Dialog::on_pushButton_clicked()
 {
     start_sig=0;
+
+
+    ui->horizontalSlider->setDisabled(false);
+    ui->horizontalSlider_2->setDisabled(false);
+    ui->horizontalSlider_3->setDisabled(false);
 }
 
 void Dialog::led_blink(){
 
 
     if(start_sig){
-        int a;
-        a = sense_temp();
-        QString value_1_s;
-                value_1_s.setNum(a);
-        ui->label_15->setText(value_1_s+" C");
+        long temp;
+        temp = sense_temp();
+        double t;
+        t=0.001*temp;
+        QString value_str;
+                value_str.setNum(t);
+        ui->label_15->setText(value_str+" C");
+
+        double humi;
+        humi = dht_read();
+        QString value_h;
+                value_h.setNum(humi);
+        ui->label_16->setText(value_h+" %");
 
     }else {
         digitalWrite(28, LOW);
         }
 }
 
-int sense_temp(){
-    //int temp = 0;
+long sense_temp(void){
+
     int fd = -1, ret;
 
         char *tmp1, tmp2[10], ch='t';
-        char devname_head[50]="/sys/devices/w1_bus_master1/28-030079a25e9c";
-        char devname_end[10] = "/w1_slave";
-        char dev_name[100];
-        int value;
+        char dev_name[100]="/sys/devices/w1_bus_master1/28-030079a25e9c/w1_slave";
+        long temp;
         char buffer[100];
-        //int i,j;
+        long temp_treshold;
 
-        strcpy(dev_name, devname_head);
-        strcat(dev_name, devname_end);
+        temp_treshold = 100*t_target;
 
     if((fd = open(dev_name, O_RDONLY))<0)
         {
-            //perror("Greska pri otvaranju");
+            perror("Greska pri otvaranju");
             exit(1);
         }
 
@@ -239,28 +240,95 @@ int sense_temp(){
 
         if(ret<0)
         {
-            //perror("Greska pri citanju!");
+            perror("Greska pri citanju!");
             exit(1);
         }
 
         tmp1 = strchr(buffer, ch);
         sscanf(tmp1, "t=%s", tmp2);
-        value = atoi(tmp2);
+        temp = atoi(tmp2);
 
-        double temp_treshold;
-        temp_treshold=0.1*t_target;
 
-        double value_1;
-        value_1 = 0.001*value;
-
-        if(value_1>temp_treshold){
+        if(temp>temp_treshold){
             digitalWrite(28, HIGH);
             }
             else
             digitalWrite(28, LOW);
 
         close(fd);
+    return temp;
 
-
-    return value;
 }
+
+
+double dht_read(void){
+
+    int bits[250], data[100];
+    int bitidx = 0;
+
+    int counter = 0;
+    int laststate = HIGH;
+    int j=0;
+
+    //set GPIO pin to output
+    pinMode(3, OUTPUT);
+    digitalWrite(3, HIGH);
+    delay(500);
+    //usleep(500000);
+    digitalWrite(3, LOW);
+    delay(10);
+    //usleep(10000);
+
+    pinMode(3, INPUT);
+
+    data[0] = data[1] = data[2] = data[3] = data[4] = 0;
+
+    //wait for pin to drop?
+    while(digitalRead(3) == 1){
+      usleep(1);
+    }
+
+    //read data
+    for (int i=0; i<100; i++){
+      counter = 0;
+      while(digitalRead(3) == laststate){
+      counter++;
+      if(counter == 1000)
+        break;
+      }
+    laststate = digitalRead(3);
+    if(counter == 1000) break;
+    bits[bitidx++] = counter;
+
+      if((i>3) && (i%2 == 0)){
+        data[j/8] <<= 1;
+          if(counter > 200)
+          data[j/8] |= 1;
+        j++;
+      }
+    }
+
+
+  //printf("Data (%d): 0x%x 0x%x 0x%x 0x%x 0x%x\n", j, data[0], data[1], data[2], data[3], data[4]);
+
+  double hum=0;
+
+  if ((j >= 39) && (data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF)) ) {
+     // yay!
+    //float f, h;
+    double h;
+    h = data[0] * 256 + data[1];
+    h /= 10;
+
+    hum=h;
+    /*f = (data[2] & 0x7F)* 256 + data[3];
+        f /= 10.0;
+        if (data[2] & 0x80)  f *= -1;
+    printf("Temp =  %.1f *C, Hum = %.1f \%\n", f, h);
+
+    return 1;*/
+  }
+
+  return hum;
+}
+
