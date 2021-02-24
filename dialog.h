@@ -7,7 +7,7 @@ extern bool start_sig;
 extern int d_target;
 extern int t_target;
 extern int h_target;
-//extern int mode;
+
 
 namespace Ui {
 class Dialog;
