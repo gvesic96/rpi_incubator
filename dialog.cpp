@@ -23,7 +23,7 @@
 
 #define DHTPIN 3
 #define SERVOPIN 1
-
+#define ROT_PERIOD 6
 
 #define changeHexToInt(hex) ((((hex)>>4)*10)+((hex)%16))
 #define SEK 0x00
@@ -35,10 +35,13 @@
 #define YEAR  0x06
 
 //int omg[7];
-unsigned char g8563_Store[7];
-unsigned char init8563_Store[7]={0x00,0x59,0x23,0x02,0x31,0x12,0x20};
-void P8563_Readtime(void);
+unsigned char ds3231_Store[7];
+unsigned char init3231_Store[7]={0x50,0x59,0x05,0x00,0x01,0x01,0x01};
+//unsigned char init3231_Store[7]={0x00,0x59,0x23,0x02,0x31,0x12,0x20};
 
+void DS3231_Readtime(void);
+unsigned char count_days(void);
+void DS3231_init(void);
 
 
 bool start_sig = 0;
@@ -51,7 +54,7 @@ long sense_temp(void);
 int dht_read(void);
 void open_hatch(void);
 void close_hatch(void);
-
+void period_rotation(void);
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -199,6 +202,8 @@ void Dialog::on_pushButton_2_clicked()
 {
     start_sig=1;
 
+    DS3231_init();
+
     d_target = ui->horizontalSlider->value();
     t_target = ui->horizontalSlider_2->value();
     h_target = ui->horizontalSlider_3->value();
@@ -218,6 +223,7 @@ void Dialog::on_pushButton_2_clicked()
 void Dialog::on_pushButton_clicked()
 {
     start_sig=0;
+
 
     ui->checkBox->setDisabled(false);
     ui->checkBox_2->setDisabled(false);
@@ -257,27 +263,42 @@ void Dialog::led_blink(){
                 value_h.setNum(humi_val);
         ui->label_16->setText(value_h+" %");
 
-
         if(humi>h_target){
             open_hatch();
             }else {
             close_hatch();
         }
 
-        P8563_Readtime();
-            /*int omg[7];
-            for(int i=0; i<=6; i++){
-                 omg[i]=g8563_Store[i];
-            }*/
-            int sat = 1, minut=2, sekund = 3, msekunde = 4;
-            //ui->label->setNum(omg[2]);
-            QTime vreme (sat, minut, sekund, msekunde);
-            vreme.setHMS(g8563_Store[2],g8563_Store[1],g8563_Store[0]);
-            QString logtime = vreme.toString("hh:mm:ss");
-            ui->label_14->setText(logtime);
+        /*DS3231_Readtime();
+
+        int sat = 1, minut=2, sekund = 3, msekunde = 4;
+
+        QTime vreme (sat, minut, sekund, msekunde);
+            vreme.setHMS(ds3231_Store[2],ds3231_Store[1],ds3231_Store[0]);
+        QString logtime = vreme.toString("hh:mm:ss");
+        ui->label_14->setText(logtime);
+
+        int year=2000+ds3231_Store[6];
+
+        int y=1, m=2, d=3;
+        QDate datum (y, m, d);
+            datum.setDate(year, ds3231_Store[5], ds3231_Store[4]);
+        QString logdate = datum.toString("dd.MM.yyyy.");
+            //ui->label_2->setText(logdate);*/
+
+        unsigned char days;
+        days = count_days();
+        QString value_d;
+                value_d.setNum(days);
+        ui->label_14->setText(value_d+" D");
+
+        period_rotation();
 
     }else {
+        digitalWrite(25, LOW);
+
         digitalWrite(28, LOW);
+        digitalWrite(29, LOW);
         }
 }
 
@@ -313,10 +334,10 @@ long sense_temp(void){
 
 
         if(t>temp_treshold){
-            digitalWrite(28, HIGH);
+            digitalWrite(25, HIGH);
             }
             else
-            digitalWrite(28, LOW);
+            digitalWrite(25, LOW);
 
         close(fd);
     return t;
@@ -384,38 +405,35 @@ int dht_read(void){
 void open_hatch(void){
 
         digitalWrite(SERVOPIN, HIGH);
-        usleep(800);
-        //delay(1);
+        usleep(800); //delay(1)
         digitalWrite(SERVOPIN, LOW);
-        usleep(19200);
-        //delay(19);
+        usleep(19200); //delay(19)
 }
 
 void close_hatch(void){
 
     digitalWrite(SERVOPIN, HIGH);
-    usleep(1850);
-    //delay(2);
+    usleep(1850); //delay(2)
     digitalWrite(SERVOPIN, LOW);
-    usleep(18150);
-    //delay(18);
+    usleep(18150); //delay(18)
 }
 
-void P8563_settime(){
+
+void DS3231_settime(){
 
     int fd = wiringPiI2CSetup(0x68);
     for(int i=0; i<=6; i++){
-    wiringPiI2CWriteReg8(fd, SEK+i, g8563_Store[i]);
+        wiringPiI2CWriteReg8(fd, SEK+i, ds3231_Store[i]);
     }
 
 }
 
-void P8563_init(){
+void DS3231_init(){
 
     for(int i=0; i<=6; i++)
-        g8563_Store[i]=init8563_Store[i];
+        ds3231_Store[i]=init3231_Store[i];
 
-    P8563_settime();
+    DS3231_settime();
     //printf("Postavljeno pocetno tekuce vreme...\n");
 
     //inicijalizacija RTC-a ???????
@@ -423,36 +441,58 @@ void P8563_init(){
 }
 
 
-void P8563_Readtime(){
+void DS3231_Readtime(){
 
     unsigned char time[7];
     int fd =  wiringPiI2CSetup(0x68);
 
     for(int i=0; i<=6; i++){
-    time[i] = wiringPiI2CReadReg8(fd, SEK+i);
+        time[i] = wiringPiI2CReadReg8(fd, SEK+i);
     }
 
+    ds3231_Store[0] = time[0] & 0x7f; //sec
+    ds3231_Store[1] = time[1] & 0x7f; //min
+    ds3231_Store[2] = time[2] & 0x3f; //hour
 
-    g8563_Store[0] = time[0] & 0x7f; //sec
-    g8563_Store[1] = time[1] & 0x7f; //min
-    g8563_Store[2] = time[2] & 0x3f; //hour
-
-    g8563_Store[3] = time[3] & 0x07; //day
-    g8563_Store[4] = time[4] & 0x3f; //date
-    g8563_Store[5] = time[5] & 0x1f; //month
-    g8563_Store[6] = time[6] & 0xff; //year
-
+    ds3231_Store[3] = time[3] & 0x07; //day
+    ds3231_Store[4] = time[4] & 0x3f; //date
+    ds3231_Store[5] = time[5] & 0x1f; //month
+    ds3231_Store[6] = time[6] & 0xff; //year
 
     for(int i=0; i<=6; i++){
-        g8563_Store[i] = changeHexToInt(g8563_Store[i]);
+        ds3231_Store[i] = changeHexToInt(ds3231_Store[i]);
     }
-    /*g8563_Store[0] = changeHexToInt(g8563_Store[0]);
-    g8563_Store[1] = changeHexToInt(g8563_Store[1]);
-    g8563_Store[2] = changeHexToInt(g8563_Store[2]);
-
-    g8563_Store[3] = changeHexToInt(g8563_Store[3]);
-    g8563_Store[4] = changeHexToInt(g8563_Store[4]);
-    g8563_Store[5] = changeHexToInt(g8563_Store[5]);
-    g8563_Store[6] = changeHexToInt(g8563_Store[6]);*/
 }
 
+
+void period_rotation(void){
+
+    DS3231_Readtime();
+
+    unsigned char mod = 0;
+    mod = ds3231_Store[2] % ROT_PERIOD;
+    if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod ==0){
+        //ROTATION
+        digitalWrite(28, HIGH);
+        digitalWrite(29, LOW);
+
+        //digitalWrite
+    }
+
+}
+
+unsigned char count_days(void){
+    DS3231_Readtime();
+
+    unsigned char d=0;
+
+    if(ds3231_Store[5]==1){
+        d=ds3231_Store[4];
+    } else if(ds3231_Store[5]==2){
+                d=ds3231_Store[4] + 31;
+    } else if(ds3231_Store[5]==3){
+                d=ds3231_Store[4] + 31 + 28;
+    }
+
+    return d;
+}

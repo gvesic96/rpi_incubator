@@ -356,6 +356,12 @@
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <widget class="QSlider" name="horizontalSlider">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>90</number>
+      </property>
       <property name="singleStep">
        <number>1</number>
       </property>
