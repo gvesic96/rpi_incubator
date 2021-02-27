@@ -23,7 +23,12 @@
 
 #define DHTPIN 3
 #define SERVOPIN 1
+#define SW_PIN_L 26
+#define SW_PIN_R 27
+
 #define ROT_PERIOD 6
+
+
 
 #define changeHexToInt(hex) ((((hex)>>4)*10)+((hex)%16))
 #define SEK 0x00
@@ -36,14 +41,14 @@
 
 //int omg[7];
 unsigned char ds3231_Store[7];
-unsigned char init3231_Store[7]={0x50,0x59,0x05,0x00,0x01,0x01,0x01};
+unsigned char init3231_Store[7]={0x50,0x59,0x05,0x01,0x01,0x01,0x01};
 //unsigned char init3231_Store[7]={0x00,0x59,0x23,0x02,0x31,0x12,0x20};
 
 void DS3231_Readtime(void);
 unsigned char count_days(void);
 void DS3231_init(void);
 
-
+bool rot = 0;
 bool start_sig = 0;
 int d_target = 0;
 int t_target = 0;
@@ -55,6 +60,10 @@ int dht_read(void);
 void open_hatch(void);
 void close_hatch(void);
 void period_rotation(void);
+void rotation_check(void);
+void rotate_left(void);
+void rotate_right(void);
+void stall(void);
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -464,8 +473,82 @@ void DS3231_Readtime(){
     }
 }
 
+void rotation_check(void){
+    //called every timer period, in this case every second
+    //executed every ROT_PERIOD hours
+    DS3231_Readtime();
+
+    int sw_l;
+    int sw_r;
+
+    unsigned char mod = 0;
+    mod = ds3231_Store[2] % ROT_PERIOD;
+    if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod ==0){
+
+        sw_l = digitalRead(SW_PIN_L);
+        sw_r = digitalRead(SW_PIN_R);
+
+        if(sw_l == 0 && sw_r == 1){
+            rot = 0; //rotation permission for left
+        }
+
+        if(sw_l == 1 && sw_r == 0){
+            rot = 1; //rotation permission for right
+        }
+    }
+}
 
 void period_rotation(void){
+    //called every 100ms in another timer
+
+    int sw_l;
+    int sw_r;
+
+    sw_l = digitalRead(SW_PIN_L);
+    sw_r = digitalRead(SW_PIN_R);
+
+    if(sw_l == 0){
+        if(rot == 0){
+            //rotate_left function
+            rotate_left();
+        }
+
+    }else {
+        //stall function
+        stall();
+    }
+
+    if(sw_r == 0){
+        if(rot == 1){
+            //rotate_right function
+            rotate_right();
+        }
+    }else {
+        //stall function
+        stall();
+    }
+
+}
+
+void rotate_left(void){
+    //rotate left
+    digitalWrite(28, HIGH);
+    digitalWrite(29, LOW);
+}
+
+void rotate_right(void){
+    //rotate right
+    digitalWrite(28, LOW);
+    digitalWrite(29, HIGH);
+}
+
+void stall(void){
+    //do not rotate
+    digitalWrite(28, LOW);
+    digitalWrite(29, LOW);
+}
+
+/*void period_rotation(void){
 
     DS3231_Readtime();
 
@@ -473,13 +556,22 @@ void period_rotation(void){
     mod = ds3231_Store[2] % ROT_PERIOD;
     if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod ==0){
         //ROTATION
+        int sw_l = digitalRead(SW_PIN_L);
+        int sw_r = digitalRead(SW_PIN_R);
+
+        if(sw_l == 0 && sw_r ==1){
+        //rotate left
         digitalWrite(28, HIGH);
         digitalWrite(29, LOW);
+        }else if(sw_l == 0 && sw_r ==1){
+            //rotate right
+            digitalWrite(28, LOW);
+            digitalWrite(29, HIGH);
+            }
 
-        //digitalWrite
     }
 
-}
+}*/
 
 unsigned char count_days(void){
     DS3231_Readtime();
