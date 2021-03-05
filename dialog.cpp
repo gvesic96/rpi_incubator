@@ -25,7 +25,8 @@
 #define SERVOPIN 1
 #define SW_PIN_L 26
 #define SW_PIN_R 27
-
+#define FLAG_PIN 25
+#define HEATER_PIN 24
 
 
 #define ROT_PERIOD 6
@@ -80,6 +81,9 @@ Dialog::Dialog(QWidget *parent) :
 
     pinMode(SERVOPIN, OUTPUT);
 
+    pinMode(HEATER_PIN, OUTPUT);
+    pinMode(FLAG_PIN, OUTPUT);
+
     pinMode(SW_PIN_L, INPUT);
     pinMode(SW_PIN_R, INPUT);
 
@@ -89,13 +93,23 @@ Dialog::Dialog(QWidget *parent) :
 void Dialog::update(){
 
     if(start_sig){
+
         long temp;
         temp = sense_temp();
-        double t;
-        t=0.001*temp;
+
+        double temp_val;
+        temp_val=0.001*temp;
         QString value_t;
-                value_t.setNum(t);
+                value_t.setNum(temp_val);
         ui->label_15->setText(value_t+" C");
+
+        double t_threshold;
+        t_threshold = 0.1* t_target;
+        if(temp_val<t_threshold){
+            digitalWrite(HEATER_PIN, HIGH);
+        }else {
+            digitalWrite(HEATER_PIN, LOW);
+        }
 
         int humi;
         humi = dht_read();
@@ -125,63 +139,47 @@ void Dialog::update(){
         ui->label_18->setNum(ds3231_Store[0]);
 
     }else {
-        digitalWrite(25, LOW);
+        digitalWrite(FLAG_PIN, LOW);
+        digitalWrite(HEATER_PIN, LOW);
         counter=0;
+        stall();
         }
 }
 
 
-void period_rotation(){
-    //called every 200ms in another timer
+void period_rotation(void){
 
     int sw_l;
     int sw_r;
 
-    if(start_sig){
     sw_l = digitalRead(SW_PIN_L);
     sw_r = digitalRead(SW_PIN_R);
 
         if(rot == 0){
-            if(sw_l == 0 && counter<10){
+            if(sw_l == 0 && counter<4){
             //rotate_left function
             counter=counter+1;
             rotate_left();
-            }else{stall();}
-        }else {if(sw_r == 0 && counter<10){
+            }else{
+                stall();
+            }
+        }else {if(sw_r == 0 && counter<4){
                 //rotate_right function
                 counter=counter+1;
                 rotate_right();
-                }else {stall();}
+                }else{
+                    stall();
+                }
         }
         if(sw_l == 1 || sw_r == 1){counter=0;}
-    }
 
-}
-
-/*void Dialog::period_rotation(){
-    //called every 100ms in another timer
-
-    int sw_l;
-    int sw_r;
-
-    if(start_sig){
-    sw_l = digitalRead(SW_PIN_L);
-    sw_r = digitalRead(SW_PIN_R);
-
-        if(rot == 0){
-            if(sw_l == 0){
-            //rotate_left function
-            rotate_left();
-            }else{stall();}
-        }else {if(sw_r == 0){
-                //rotate_right function
-                rotate_right();
-                }else {stall();}
+        if(counter>=4){
+            digitalWrite(FLAG_PIN, HIGH);
         }
-
-    }
-
-}*/
+        else {
+            digitalWrite(FLAG_PIN, LOW);
+        }
+}
 
 void rotate_left(void){
     //rotate left
@@ -230,13 +228,6 @@ long sense_temp(void){
         tmp1 = strchr(buffer, ch);
         sscanf(tmp1, "t=%s", tmp2);
         t = atoi(tmp2);
-
-
-        if(t>temp_treshold){
-            digitalWrite(25, HIGH);
-            }
-            else
-            digitalWrite(25, LOW);
 
         close(fd);
     return t;
@@ -335,10 +326,6 @@ void DS3231_init(){
         ds3231_Store[i]=init3231_Store[i];
 
     DS3231_settime();
-    //printf("Postavljeno pocetno tekuce vreme...\n");
-
-    //inicijalizacija RTC-a ???????
-
 }
 
 
@@ -377,7 +364,7 @@ void rotation_check(void){
     /*mod = ds3231_Store[2] % ROT_PERIOD;
     if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod == 0){*/
     //isprobavanje ISPOD NE TREBA OVAKO
-    mod = ds3231_Store[0] % 30;
+    mod = ds3231_Store[0] % 20;
     if(mod == 0){
         //rot=!rot;
         sw_l = digitalRead(SW_PIN_L);
@@ -388,38 +375,10 @@ void rotation_check(void){
         }else if(sw_l == 1 && sw_r == 0){
             rot = 1; //rotation permission for right
         }else {
-            rot = !rot;
+            rot = !rot; //maybe not needed/maybe needed for 11 switch state???
         }
     }
 }
-
-/*void rotation_check(void){
-    //called every main timer period, in this case every second
-    //executed every ROT_PERIOD hours
-    DS3231_Readtime();
-
-    int sw_l;
-    int sw_r;
-
-    unsigned char mod = 0;
-    //mod = ds3231_Store[2] % ROT_PERIOD;
-    //if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod == 0){
-    //isprobavanje ISPOD NE TREBA OVAKO
-    mod = ds3231_Store[0] % 30;
-    if(mod == 0){
-        //rot=!rot;
-        sw_l = digitalRead(SW_PIN_L);
-        sw_r = digitalRead(SW_PIN_R);
-
-        if(sw_l == 0 && sw_r == 1){
-            rot = 0; //rotation permission for left
-        }
-
-        if(sw_l == 1 && sw_r == 0){
-            rot = 1; //rotation permission for right
-        }
-    }
-}*/
 
 
 unsigned char count_days(void){
