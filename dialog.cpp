@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #include <sys/fcntl.h>
+#include "softPwm.h"
 
 #define DHTPIN 3
 #define SERVOPIN 1
@@ -27,6 +28,10 @@
 #define SW_PIN_R 27
 #define FLAG_PIN 25
 #define HEATER_PIN 24
+
+#define DRIVER_1 28
+#define DRIVER_2 29
+
 
 
 #define ROT_PERIOD 6
@@ -55,7 +60,7 @@ int d_target = 0;
 int t_target = 0;
 int h_target = 0;
 
-int counter = 1;
+int counter = 0;
 
 long sense_temp(void);
 int dht_read(void);
@@ -67,6 +72,8 @@ void rotation_check(void);
 void rotate_left(void);
 void rotate_right(void);
 void stall(void);
+
+
 
 Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
@@ -87,7 +94,11 @@ Dialog::Dialog(QWidget *parent) :
     pinMode(SW_PIN_L, INPUT);
     pinMode(SW_PIN_R, INPUT);
 
+    softPwmCreate(DRIVER_1, 0, 100);
+    softPwmCreate(DRIVER_2, 0, 100);
+
 }
+
 
 
 void Dialog::update(){
@@ -156,25 +167,27 @@ void period_rotation(void){
     sw_r = digitalRead(SW_PIN_R);
 
         if(rot == 0){
-            if(sw_l == 0 && counter<4){
-            //rotate_left function
-            counter=counter+1;
-            rotate_left();
-            }else{
-                stall();
-            }
-        }else {if(sw_r == 0 && counter<4){
-                //rotate_right function
+              if(sw_l == 0 && counter < 2){
+                //rotate_left function
                 counter=counter+1;
-                rotate_right();
+                rotate_left();
+              }else{
+                  stall();
+              }
+            if(sw_l == 1 && sw_r == 0){counter = 0;}//resets safety counter
+
+        }else {if(sw_r == 0 && counter < 2){
+                  //rotate_right function
+                  counter=counter+1;
+                  rotate_right();
                 }else{
                     stall();
                 }
+            if(sw_r == 1 && sw_l == 0){counter = 0;}//resets safety counter
         }
-        if(sw_l == 1 || sw_r == 1){counter=0;}
 
-        if(counter>=4){
-            digitalWrite(FLAG_PIN, HIGH);
+        if(counter >= 2){
+            digitalWrite(FLAG_PIN, HIGH);//Raise alarm rotation flag
         }
         else {
             digitalWrite(FLAG_PIN, LOW);
@@ -183,20 +196,20 @@ void period_rotation(void){
 
 void rotate_left(void){
     //rotate left
-    digitalWrite(28, HIGH);
-    digitalWrite(29, LOW);
+    softPwmWrite(DRIVER_1, 30);//30% PWM
+    softPwmWrite(DRIVER_2, 0);
 }
 
 void rotate_right(void){
     //rotate right
-    digitalWrite(28, LOW);
-    digitalWrite(29, HIGH);
+    softPwmWrite(DRIVER_1, 0);
+    softPwmWrite(DRIVER_2, 30); //30% PWM
 }
 
 void stall(void){
-    //do not rotate
-    digitalWrite(28, LOW);
-    digitalWrite(29, LOW);
+    //do not rotate    
+    softPwmWrite(DRIVER_1, 0);
+    softPwmWrite(DRIVER_2, 0);
 }
 
 long sense_temp(void){
@@ -207,22 +220,17 @@ long sense_temp(void){
         char dev_name[100]="/sys/devices/w1_bus_master1/28-030079a25e9c/w1_slave";
         long t;
         char buffer[100];
-        long temp_treshold;
-
-        temp_treshold = 100*t_target;
 
     if((fd = open(dev_name, O_RDONLY))<0)
         {
-            perror("Greska pri otvaranju");
-            exit(1);
+            return 0;
         }
 
         ret = read(fd, buffer, sizeof(buffer));
 
         if(ret<0)
         {
-            perror("Greska pri citanju!");
-            exit(1);
+            return 0;
         }
 
         tmp1 = strchr(buffer, ch);
@@ -237,8 +245,6 @@ long sense_temp(void){
 
 int dht_read(void){
 
-    //BITS[250] IS UNUSED !!!!!!!!!!!!!
-
     int bits[250], data[100];
     int bitidx = 0;
 
@@ -249,12 +255,12 @@ int dht_read(void){
     //set GPIO pin to output
     pinMode(DHTPIN, OUTPUT);
 
+    //waking up sensor
     digitalWrite(DHTPIN, HIGH);
-    delay(100);
-    //usleep(500000); TOO LONG DELAY
+    delay(100); //longer better
     digitalWrite(DHTPIN, LOW);
     delay(10);
-    //usleep(10000);
+
     pinMode(DHTPIN, INPUT);
 
     data[0] = data[1] = data[2] = data[3] = data[4] = 0;
@@ -351,6 +357,7 @@ void DS3231_Readtime(){
         ds3231_Store[i] = changeHexToInt(ds3231_Store[i]);
     }
 }
+
 
 void rotation_check(void){
     //called every main timer period, in this case every second
