@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>741</width>
-    <height>622</height>
+    <height>660</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -215,6 +215,9 @@
       <property name="text">
        <string>TextLabel</string>
       </property>
+      <property name="textFormat">
+       <enum>Qt::AutoText</enum>
+      </property>
      </widget>
     </item>
     <item row="2" column="2" alignment="Qt::AlignHCenter">
@@ -232,7 +235,7 @@
      <x>30</x>
      <y>520</y>
      <width>321</width>
-     <height>91</height>
+     <height>130</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -246,7 +249,10 @@
     <item>
      <widget class="QLabel" name="label_17">
       <property name="text">
-       <string>STATUS IMG</string>
+       <string/>
+      </property>
+      <property name="pixmap">
+       <pixmap resource="slike.qrc">:/slike/switch-off.png</pixmap>
       </property>
      </widget>
     </item>
@@ -256,9 +262,9 @@
    <property name="geometry">
     <rect>
      <x>380</x>
-     <y>520</y>
+     <y>590</y>
      <width>331</width>
-     <height>91</height>
+     <height>61</height>
     </rect>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -391,6 +397,32 @@
      </widget>
     </item>
    </layout>
+  </widget>
+  <widget class="QPushButton" name="pushButton_3">
+   <property name="geometry">
+    <rect>
+     <x>380</x>
+     <y>520</y>
+     <width>331</width>
+     <height>61</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>HELP</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_19">
+   <property name="geometry">
+    <rect>
+     <x>520</x>
+     <y>0</y>
+     <width>191</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Lazy Farmer Industries Ltd.</string>
+   </property>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

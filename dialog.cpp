@@ -4,10 +4,7 @@
 #include <QTimer>
 #include <QTime>
 #include <QDate>
-//#include <QMessageBox>
-//#include <QFile>
-//#include <QTextStream>
-//#include <QScrollBar>
+#include <QMessageBox>
 
 #include <wiringPiI2C.h>
 #include <wiringPi.h>
@@ -33,9 +30,9 @@
 #define DRIVER_2 29
 
 
-
 #define ROT_PERIOD 6
 #define PWM_LEVEL 20
+
 
 #define changeHexToInt(hex) ((((hex)>>4)*10)+((hex)%16))
 #define SEK 0x00
@@ -51,19 +48,18 @@ unsigned char ds3231_Store[7];
 unsigned char init3231_Store[7]={0x01,0x00,0x05,0x01,0x01,0x01,0x01};
 //unsigned char init3231_Store[7]={0x00,0x59,0x23,0x02,0x31,0x12,0x20};
 
-void DS3231_Readtime(void);
-unsigned char count_days(void);
-void DS3231_init(void);
-
-bool rot_go = 1;
-bool rot = 0;
 bool start_sig = 0;
 int d_target = 0;
 int t_target = 0;
 int h_target = 0;
 
+bool rot = 0;
+bool rot_go = 1;
 int counter = 0;
 
+void DS3231_Readtime(void);
+unsigned char count_days(void);
+void DS3231_init(void);
 
 long sense_temp(void);
 int dht_read(void);
@@ -170,15 +166,15 @@ void Dialog::update(){
         rot_limit = d_target - 3;
         if(days >= rot_limit){rot_go = 0;}
 
-        //period_rotation();
-        ui->label_17->setNum(counter);
-        ui->label_18->setNum(ds3231_Store[0]);
 
     }else {
+
         digitalWrite(FLAG_PIN, LOW);
         digitalWrite(HEATER_PIN, LOW);
         counter=0;
+
         }
+
 }
 
 
@@ -211,7 +207,7 @@ void period_rotation(void){
         }
 
         if(counter >= 100){
-            digitalWrite(FLAG_PIN, HIGH);//Raise alarm rotation flag
+            digitalWrite(FLAG_PIN, HIGH);//raise alarm rotation flag
         }
         else {
             digitalWrite(FLAG_PIN, LOW);
@@ -270,8 +266,6 @@ long sense_temp(void){
 int dht_read(void){
 
     int data[100];
-    //int bits[250], data[100];
-    //int bitidx = 0;
 
     int counter = 0;
     int laststate = HIGH;
@@ -305,7 +299,6 @@ int dht_read(void){
       }
     laststate = digitalRead(DHTPIN);
     if(counter == 1000) break;
-    //bits[bitidx++] = counter;
 
       if((i>3) && (i%2 == 0)){
         data[j/8] <<= 1;
@@ -317,7 +310,7 @@ int dht_read(void){
 
     int h = 0;
   if ((j >= 39) && (data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF)) ) {
-     // yay!
+
     h = data[0] * 256 + data[1];    
   }
 
@@ -327,10 +320,10 @@ int dht_read(void){
 
 void open_hatch(void){
 
-        digitalWrite(SERVOPIN, HIGH);
-        usleep(800); //delay(1)
-        digitalWrite(SERVOPIN, LOW);
-        usleep(19200); //delay(19)
+    digitalWrite(SERVOPIN, HIGH);
+    usleep(800); //delay(1)
+    digitalWrite(SERVOPIN, LOW);
+    usleep(19200); //delay(19)
 }
 
 void close_hatch(void){
@@ -405,9 +398,7 @@ void rotation_check(void){
             rot = 0; //rotation permission for left
         }else if(sw_l == 1 && sw_r == 0){
             rot = 1; //rotation permission for right
-        }/*else {
-            rot = !rot; //maybe not needed/maybe needed for 11 switch state???
-        }*/
+        }
     }
 }
 
@@ -440,7 +431,7 @@ void Dialog::on_checkBox_clicked(bool checked)
         ui->horizontalSlider->setValue(21);
         ui->label_7->setText("21 D");
         ui->horizontalSlider_2->setValue(377);
-        ui->label_8->setText("37.7 C");
+        ui->label_8->setText("37.8 C");
         ui->horizontalSlider_3->setValue(600);
         ui->label_9->setText("60.0 %");
 
@@ -462,7 +453,7 @@ void Dialog::on_checkBox_2_clicked(bool checked)
         ui->horizontalSlider->setValue(28);
         ui->label_7->setText("28 D");
         ui->horizontalSlider_2->setValue(377);
-        ui->label_8->setText("37.7 C");
+        ui->label_8->setText("37.8 C");
         ui->horizontalSlider_3->setValue(550);
         ui->label_9->setText("55.0 %");
 
@@ -560,6 +551,10 @@ void Dialog::on_pushButton_2_clicked()
     t_target = ui->horizontalSlider_2->value();
     h_target = ui->horizontalSlider_3->value();
 
+    ui->label_17->setPixmap(QPixmap(":/slike/switch-on.png"));
+
+    ui->pushButton_3->setDisabled(true);
+
     ui->horizontalSlider->setDisabled(true);
     ui->horizontalSlider_2->setDisabled(true);
     ui->horizontalSlider_3->setDisabled(true);
@@ -569,29 +564,43 @@ void Dialog::on_pushButton_2_clicked()
     ui->checkBox_3->setDisabled(true);
     ui->checkBox_4->setDisabled(true);
 
-
 }
 
 void Dialog::on_pushButton_clicked()
 {
     start_sig=0;
 
+    ui->pushButton_3->setDisabled(false);
 
     ui->checkBox->setDisabled(false);
     ui->checkBox_2->setDisabled(false);
     ui->checkBox_3->setDisabled(false);
     ui->checkBox_4->setDisabled(false);
 
+    ui->label_17->setPixmap(QPixmap(":/slike/switch-off.png"));
+
     if(ui->checkBox_4->isChecked() == true){
     ui->horizontalSlider->setDisabled(false);
     ui->horizontalSlider_2->setDisabled(false);
     ui->horizontalSlider_3->setDisabled(false);
-    }/*else {
-        ui->horizontalSlider->setDisabled(true);
-        ui->horizontalSlider_2->setDisabled(true);
-        ui->horizontalSlider_3->setDisabled(true);
-        }*/
+    }
 
+}
+
+void Dialog::on_pushButton_3_clicked()
+{
+    if(start_sig == 0){
+    QMessageBox::information(this, "SUGGESTED CUSTOM", "Suggested custom settings...\n"
+                                                       "Turkey      Days-28 Temp-37.2 Humi-55\n"
+                                                       "MuscovyDuck Days-36 Temp-37.8 Humi-55\n"
+                                                       "GuineaFowl  Days-28 Temp-37.8 Humi-55\n"
+                                                       "Pheasant    Days-23 Temp-37.8 Humi-60\n"
+                                                       "Peafowl     Days-28 Temp-37.2 Humi-55\n"
+                                                       "Chukar      Days-23 Temp-37.8 Humi-45\n"
+                                                       "Grouse      Days-25 Temp-37.8 Humi-55\n"
+                                                       "Pigeon      Days-17 Temp-37.8 Humi-55\n");
+
+    }
 }
 
 Dialog::~Dialog()
