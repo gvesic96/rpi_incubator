@@ -35,6 +35,7 @@
 
 
 #define ROT_PERIOD 6
+#define PWM_LEVEL 18
 
 #define changeHexToInt(hex) ((((hex)>>4)*10)+((hex)%16))
 #define SEK 0x00
@@ -62,6 +63,7 @@ int h_target = 0;
 
 int counter = 0;
 
+
 long sense_temp(void);
 int dht_read(void);
 void open_hatch(void);
@@ -86,6 +88,10 @@ Dialog::Dialog(QWidget *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
     timer->start(1000);
 
+    QTimer *timer2 = new QTimer(this);
+    connect(timer2, SIGNAL(timeout()), this, SLOT(update_rotation()));
+    timer2->start(10);
+
     pinMode(SERVOPIN, OUTPUT);
 
     pinMode(HEATER_PIN, OUTPUT);
@@ -100,6 +106,16 @@ Dialog::Dialog(QWidget *parent) :
 }
 
 
+void Dialog::update_rotation(){
+
+    if(start_sig){
+      period_rotation();
+
+    }else {
+      stall();
+    }
+
+}
 
 void Dialog::update(){
 
@@ -145,7 +161,9 @@ void Dialog::update(){
 
         rotation_check();
 
-        period_rotation();
+        if(days >= d_target){start_sig = 0;}
+
+        //period_rotation();
         ui->label_17->setNum(counter);
         ui->label_18->setNum(ds3231_Store[0]);
 
@@ -153,7 +171,6 @@ void Dialog::update(){
         digitalWrite(FLAG_PIN, LOW);
         digitalWrite(HEATER_PIN, LOW);
         counter=0;
-        stall();
         }
 }
 
@@ -167,7 +184,7 @@ void period_rotation(void){
     sw_r = digitalRead(SW_PIN_R);
 
         if(rot == 0){
-              if(sw_l == 0 && counter < 2){
+              if(sw_l == 0 && counter < 100){//changed to 20 because timer 2 100ms period
                 //rotate_left function
                 counter=counter+1;
                 rotate_left();
@@ -176,7 +193,7 @@ void period_rotation(void){
               }
             if(sw_l == 1 && sw_r == 0){counter = 0;}//resets safety counter
 
-        }else {if(sw_r == 0 && counter < 2){
+        }else {if(sw_r == 0 && counter < 100){
                   //rotate_right function
                   counter=counter+1;
                   rotate_right();
@@ -186,7 +203,7 @@ void period_rotation(void){
             if(sw_r == 1 && sw_l == 0){counter = 0;}//resets safety counter
         }
 
-        if(counter >= 2){
+        if(counter >= 20){
             digitalWrite(FLAG_PIN, HIGH);//Raise alarm rotation flag
         }
         else {
@@ -196,14 +213,14 @@ void period_rotation(void){
 
 void rotate_left(void){
     //rotate left
-    softPwmWrite(DRIVER_1, 30);//30% PWM
+    softPwmWrite(DRIVER_1, PWM_LEVEL);//PWM
     softPwmWrite(DRIVER_2, 0);
 }
 
 void rotate_right(void){
     //rotate right
     softPwmWrite(DRIVER_1, 0);
-    softPwmWrite(DRIVER_2, 30); //30% PWM
+    softPwmWrite(DRIVER_2, PWM_LEVEL); //PWM
 }
 
 void stall(void){
@@ -245,8 +262,9 @@ long sense_temp(void){
 
 int dht_read(void){
 
-    int bits[250], data[100];
-    int bitidx = 0;
+    int data[100];
+    //int bits[250], data[100];
+    //int bitidx = 0;
 
     int counter = 0;
     int laststate = HIGH;
@@ -257,9 +275,9 @@ int dht_read(void){
 
     //waking up sensor
     digitalWrite(DHTPIN, HIGH);
-    delay(100); //longer better
-    digitalWrite(DHTPIN, LOW);
-    delay(10);
+    delay(50); //longer better?
+    digitalWrite(DHTPIN, LOW);//host sending start signal
+    delay(10);//1-10ms
 
     pinMode(DHTPIN, INPUT);
 
@@ -280,7 +298,7 @@ int dht_read(void){
       }
     laststate = digitalRead(DHTPIN);
     if(counter == 1000) break;
-    bits[bitidx++] = counter;
+    //bits[bitidx++] = counter;
 
       if((i>3) && (i%2 == 0)){
         data[j/8] <<= 1;
@@ -334,7 +352,6 @@ void DS3231_init(){
     DS3231_settime();
 }
 
-
 void DS3231_Readtime(){
 
     unsigned char time[7];
@@ -361,7 +378,7 @@ void DS3231_Readtime(){
 
 void rotation_check(void){
     //called every main timer period, in this case every second
-    //executed every ROT_PERIOD hours
+    //change permission every ROT_PERIOD hours
     DS3231_Readtime();
 
     int sw_l;
@@ -381,9 +398,9 @@ void rotation_check(void){
             rot = 0; //rotation permission for left
         }else if(sw_l == 1 && sw_r == 0){
             rot = 1; //rotation permission for right
-        }else {
+        }/*else {
             rot = !rot; //maybe not needed/maybe needed for 11 switch state???
-        }
+        }*/
     }
 }
 
