@@ -239,14 +239,14 @@
     <item alignment="Qt::AlignHCenter">
      <widget class="QLabel" name="label_18">
       <property name="text">
-       <string>POSITION:</string>
+       <string>STATUS:</string>
       </property>
      </widget>
     </item>
     <item>
      <widget class="QLabel" name="label_17">
       <property name="text">
-       <string>POSITION IMG</string>
+       <string>STATUS IMG</string>
       </property>
      </widget>
     </item>

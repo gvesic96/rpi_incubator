@@ -35,7 +35,7 @@
 
 
 #define ROT_PERIOD 6
-#define PWM_LEVEL 18
+#define PWM_LEVEL 20
 
 #define changeHexToInt(hex) ((((hex)>>4)*10)+((hex)%16))
 #define SEK 0x00
@@ -55,6 +55,7 @@ void DS3231_Readtime(void);
 unsigned char count_days(void);
 void DS3231_init(void);
 
+bool rot_go = 1;
 bool rot = 0;
 bool start_sig = 0;
 int d_target = 0;
@@ -108,7 +109,9 @@ Dialog::Dialog(QWidget *parent) :
 
 void Dialog::update_rotation(){
 
-    if(start_sig){
+    //add rotation blockade for 3 days before stopping
+
+    if(start_sig == 1 && rot_go == 1){
       period_rotation();
 
     }else {
@@ -163,6 +166,10 @@ void Dialog::update(){
 
         if(days >= d_target){start_sig = 0;}
 
+        int rot_limit;
+        rot_limit = d_target - 3;
+        if(days >= rot_limit){rot_go = 0;}
+
         //period_rotation();
         ui->label_17->setNum(counter);
         ui->label_18->setNum(ds3231_Store[0]);
@@ -203,7 +210,7 @@ void period_rotation(void){
             if(sw_r == 1 && sw_l == 0){counter = 0;}//resets safety counter
         }
 
-        if(counter >= 20){
+        if(counter >= 100){
             digitalWrite(FLAG_PIN, HIGH);//Raise alarm rotation flag
         }
         else {
@@ -283,7 +290,7 @@ int dht_read(void){
 
     data[0] = data[1] = data[2] = data[3] = data[4] = 0;
 
-    //wait for pin to drop?
+    //wait for pin to drop
     while(digitalRead(DHTPIN) == 1){
       usleep(1);
     }
@@ -430,12 +437,12 @@ void Dialog::on_checkBox_clicked(bool checked)
 
         ui->label_3->setPixmap(QPixmap(":/slike/chicken128.png"));
 
-        ui->horizontalSlider->setValue(28);
-        ui->label_7->setText("28 D");
-        ui->horizontalSlider_2->setValue(385);
-        ui->label_8->setText("38.0 C");
-        ui->horizontalSlider_3->setValue(850);
-        ui->label_9->setText("85.0 %");
+        ui->horizontalSlider->setValue(21);
+        ui->label_7->setText("21 D");
+        ui->horizontalSlider_2->setValue(377);
+        ui->label_8->setText("37.7 C");
+        ui->horizontalSlider_3->setValue(600);
+        ui->label_9->setText("60.0 %");
 
         ui->horizontalSlider->setDisabled(true);
         ui->horizontalSlider_2->setDisabled(true);
@@ -454,10 +461,10 @@ void Dialog::on_checkBox_2_clicked(bool checked)
 
         ui->horizontalSlider->setValue(28);
         ui->label_7->setText("28 D");
-        ui->horizontalSlider_2->setValue(385);
-        ui->label_8->setText("38.5 C");
-        ui->horizontalSlider_3->setValue(850);
-        ui->label_9->setText("85.0 %");
+        ui->horizontalSlider_2->setValue(377);
+        ui->label_8->setText("37.7 C");
+        ui->horizontalSlider_3->setValue(550);
+        ui->label_9->setText("55.0 %");
 
         ui->horizontalSlider->setDisabled(true);
         ui->horizontalSlider_2->setDisabled(true);
@@ -474,12 +481,12 @@ void Dialog::on_checkBox_3_clicked(bool checked)
 
         ui->label_3->setPixmap(QPixmap(":/slike/goose128.png"));
 
-        ui->horizontalSlider->setValue(21);
-        ui->label_7->setText("21 D");
-        ui->horizontalSlider_2->setValue(375);
-        ui->label_8->setText("37.5 C");
-        ui->horizontalSlider_3->setValue(850);
-        ui->label_9->setText("85.0 %");
+        ui->horizontalSlider->setValue(28);
+        ui->label_7->setText("28 D");
+        ui->horizontalSlider_2->setValue(372);
+        ui->label_8->setText("37.2 C");
+        ui->horizontalSlider_3->setValue(600);
+        ui->label_9->setText("60.0 %");
 
         ui->horizontalSlider->setDisabled(true);
         ui->horizontalSlider_2->setDisabled(true);

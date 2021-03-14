@@ -10,6 +10,7 @@ extern int h_target;
 extern unsigned char ds3231_Store[7];
 extern unsigned char init3231_Store[7];
 extern bool rot;
+extern bool rot_go;
 
 extern int counter;
 
