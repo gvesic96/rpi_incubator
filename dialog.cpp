@@ -45,16 +45,16 @@
 
 
 unsigned char ds3231_Store[7];
-unsigned char init3231_Store[7]={0x01,0x00,0x00,0x01,0x01,0x01,0x01};
+unsigned char init3231_Store[7]={0x01,0x01,0x00,0x01,0x01,0x01,0x01};
 //unsigned char init3231_Store[7]={0x00,0x59,0x23,0x02,0x31,0x12,0x20};
 
 bool start_sig = 0;
+
 int d_target = 0;
 int t_target = 0;
 int h_target = 0;
 
 bool rot = 0;
-bool rot_go = 1;
 int counter = 0;
 
 void DS3231_Readtime(void);
@@ -85,9 +85,6 @@ Dialog::Dialog(QWidget *parent) :
     connect(timer, SIGNAL(timeout()), this, SLOT(update()));
     timer->start(1000);
 
-    QTimer *timer2 = new QTimer(this);
-    connect(timer2, SIGNAL(timeout()), this, SLOT(update_rotation()));
-    timer2->start(10);
 
     pinMode(SERVOPIN, OUTPUT);
 
@@ -102,19 +99,6 @@ Dialog::Dialog(QWidget *parent) :
 
 }
 
-
-void Dialog::update_rotation(){
-
-    //rotation blockade for 3 days before stopping
-
-    if(start_sig == 1 && rot_go == 1){
-      period_rotation();
-
-    }else {
-      stall();
-    }
-
-}
 
 void Dialog::update(){
 
@@ -162,6 +146,7 @@ void Dialog::update(){
 
         if(days >= d_target){start_sig = 0;}
 
+        bool rot_go = 1;
         int rot_limit;
         rot_limit = d_target - 3;
         if(days >= rot_limit){rot_go = 0;}
@@ -170,13 +155,19 @@ void Dialog::update(){
         days_limit = d_target + 2;
         if(days >= days_limit){start_sig = 0;}
 
+        if(rot_go == 1){
+            period_rotation();
+        }else {
+            stall();
+        }
 
     }else {
 
         digitalWrite(FLAG_PIN, LOW);
         digitalWrite(HEATER_PIN, LOW);
         counter=0;
-
+        rot=0;
+        stall();
         }
 
 }
@@ -191,7 +182,7 @@ void period_rotation(void){
     sw_r = digitalRead(SW_PIN_R);
 
         if(rot == 0){
-              if(sw_l == 0 && counter < 100){//changed to 20 because timer 2 100ms period
+              if(sw_l == 0 && counter < 2){
                 //rotate_left function
                 counter=counter+1;
                 rotate_left();
@@ -200,7 +191,7 @@ void period_rotation(void){
               }
             if(sw_l == 1 && sw_r == 0){counter = 0;}//resets safety counter
 
-        }else {if(sw_r == 0 && counter < 100){
+        }else {if(sw_r == 0 && counter < 2){
                   //rotate_right function
                   counter=counter+1;
                   rotate_right();
@@ -210,7 +201,7 @@ void period_rotation(void){
             if(sw_r == 1 && sw_l == 0){counter = 0;}//resets safety counter
         }
 
-        if(counter >= 100){
+        if(counter >= 2){
             digitalWrite(FLAG_PIN, HIGH);//raise alarm rotation flag
         }
         else {
@@ -387,6 +378,7 @@ void rotation_check(void){
     int sw_r;
 
     unsigned char mod = 0;
+
     mod = ds3231_Store[2] % ROT_PERIOD;
     if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod == 0){
 
