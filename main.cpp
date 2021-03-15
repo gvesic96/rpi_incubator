@@ -7,9 +7,6 @@ int main(int argc, char *argv[])
 {
     wiringPiSetup();
 
-    //pinMode(28, OUTPUT);
-    //pinMode(29, OUTPUT);
-
 
     QApplication a(argc, argv);
     Dialog w;

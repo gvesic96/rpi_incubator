@@ -45,7 +45,7 @@
 
 
 unsigned char ds3231_Store[7];
-unsigned char init3231_Store[7]={0x01,0x00,0x05,0x01,0x01,0x01,0x01};
+unsigned char init3231_Store[7]={0x01,0x00,0x00,0x01,0x01,0x01,0x01};
 //unsigned char init3231_Store[7]={0x00,0x59,0x23,0x02,0x31,0x12,0x20};
 
 bool start_sig = 0;
@@ -105,7 +105,7 @@ Dialog::Dialog(QWidget *parent) :
 
 void Dialog::update_rotation(){
 
-    //add rotation blockade for 3 days before stopping
+    //rotation blockade for 3 days before stopping
 
     if(start_sig == 1 && rot_go == 1){
       period_rotation();
@@ -165,6 +165,10 @@ void Dialog::update(){
         int rot_limit;
         rot_limit = d_target - 3;
         if(days >= rot_limit){rot_go = 0;}
+
+        int days_limit;
+        days_limit = d_target + 2;
+        if(days >= days_limit){start_sig = 0;}
 
 
     }else {
@@ -266,17 +270,15 @@ long sense_temp(void){
 int dht_read(void){
 
     int data[100];
-
     int counter = 0;
     int laststate = HIGH;
     int j=0;
 
-    //set GPIO pin to output
     pinMode(DHTPIN, OUTPUT);
 
     //waking up sensor
     digitalWrite(DHTPIN, HIGH);
-    delay(50); //longer better?
+    delay(50);
     digitalWrite(DHTPIN, LOW);//host sending start signal
     delay(10);//1-10ms
 
@@ -385,12 +387,9 @@ void rotation_check(void){
     int sw_r;
 
     unsigned char mod = 0;
-    /*mod = ds3231_Store[2] % ROT_PERIOD;
-    if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod == 0){*/
-    //isprobavanje ISPOD NE TREBA OVAKO
-    mod = ds3231_Store[0] % 20;
-    if(mod == 0){
-        //rot=!rot;
+    mod = ds3231_Store[2] % ROT_PERIOD;
+    if(ds3231_Store[0] == 0 && ds3231_Store[1] == 0 && mod == 0){
+
         sw_l = digitalRead(SW_PIN_L);
         sw_r = digitalRead(SW_PIN_R);
 
@@ -589,18 +588,18 @@ void Dialog::on_pushButton_clicked()
 
 void Dialog::on_pushButton_3_clicked()
 {
-    if(start_sig == 0){
-    QMessageBox::information(this, "SUGGESTED CUSTOM", "Suggested custom settings...\n"
-                                                       "Turkey      Days-28 Temp-37.2 Humi-55\n"
-                                                       "MuscovyDuck Days-36 Temp-37.8 Humi-55\n"
-                                                       "GuineaFowl  Days-28 Temp-37.8 Humi-55\n"
-                                                       "Pheasant    Days-23 Temp-37.8 Humi-60\n"
-                                                       "Peafowl     Days-28 Temp-37.2 Humi-55\n"
-                                                       "Chukar      Days-23 Temp-37.8 Humi-45\n"
-                                                       "Grouse      Days-25 Temp-37.8 Humi-55\n"
-                                                       "Pigeon      Days-17 Temp-37.8 Humi-55\n");
+    //help button
+    QMessageBox::information(this, "SUGGESTED CUSTOM", "Suggested custom settings:\n"
+                                                       "\n"
+                                                       "Turkey_________Days- 28 Temp- 37.2C Humi- 55%\n"
+                                                       "MuscovyDuck__Days- 36 Temp- 37.8C Humi- 55%\n"
+                                                       "GuineaFowl___Days- 28 Temp- 37.8C Humi- 55%\n"
+                                                       "Pheasant______Days- 23 Temp- 37.8C Humi- 60%\n"
+                                                       "Peafowl_______Days- 28 Temp- 37.2C Humi- 55%\n"
+                                                       "Chukar________Days- 23 Temp- 37.8C Humi- 45%\n"
+                                                       "Grouse________Days- 25 Temp- 37.8C Humi- 55%\n"
+                                                       "Pigeon________Days- 17 Temp- 37.8C Humi- 55%\n");
 
-    }
 }
 
 Dialog::~Dialog()
