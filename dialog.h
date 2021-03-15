@@ -28,7 +28,6 @@ public:
 
 private slots:
 
-    //void update_rotation();
     void update();
 
     void on_checkBox_4_clicked(bool checked);
