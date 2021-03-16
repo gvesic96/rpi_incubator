@@ -144,8 +144,6 @@ void Dialog::update(){
 
         rotation_check();
 
-        if(days >= d_target){start_sig = 0;}
-
         bool rot_go = 1;
         int rot_limit;
         rot_limit = d_target - 3;
@@ -168,6 +166,7 @@ void Dialog::update(){
         counter=0;
         rot=0;
         stall();
+        close_hatch();
         }
 
 }
