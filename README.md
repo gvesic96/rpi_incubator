@@ -9,3 +9,6 @@ Raspberry Pi project - SMART EGG INCUBATOR
   Humidity sensor DHT22 using general 1 wire protocol.
   Servo motor SG90 for opening and closing hatch for maintaining target humidity level.
   Modified high torque servo for rotating shelf with eggs on every 6 hours.
+
+
+![image](https://github.com/user-attachments/assets/bd3cbca5-1c1a-49ee-ba41-b7bab64646c1)
