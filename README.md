@@ -12,3 +12,5 @@ Raspberry Pi project - SMART EGG INCUBATOR
 
 
 ![image](https://github.com/user-attachments/assets/bd3cbca5-1c1a-49ee-ba41-b7bab64646c1)
+
+<img width="805" height="745" alt="image" src="https://github.com/user-attachments/assets/3c3522cb-4164-4dce-be2c-240ab45b52dd" />
